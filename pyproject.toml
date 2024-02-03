@@ -1,0 +1,39 @@
+[project]
+name = "chronnotate"
+version = "0.1.0"
+description = "Tool for annotating time-series data"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE.txt"}
+keywords = ["tool", "annotations", "data"]
+authors = [
+    {name = "Bojan Sofronievski", email = "bojan.drago@gmail.com" }
+]
+maintainers = [
+    {name = "Bojan Sofronievski", email = "bojan.drago@gmail.com" }
+]
+
+classifiers = [  # Optional
+    "Development Status :: 3 - Alpha",
+
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+
+    "License :: OSI Approved :: MIT License",
+
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+]
+
+# TODO
+# dependencies = []
+
+[tool.black]
+line-length = 79
+
+[tool.isort]
+profile = "black"
