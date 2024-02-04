@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+import pyqtgraph as pg
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
 
@@ -23,6 +24,8 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
     def init_elements(self):
         self.btn_reset_data.clicked.connect(self.reset_data)
         self.lv_data_columns.doubleClicked.connect(self.update_plot)
+        self.pg_timeline.setMenuEnabled(False)
+        self.pg_timeline.setMouseEnabled(x=False, y=False)
 
     def init_plots(self):
         self.pg_main_plot.setBackground("white")
@@ -35,6 +38,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.pg_timeline.clear()
         self.pg_main_plot.addLegend()
         self.main_plot_items = {}
+        self.timeline_plot_items = {}
 
     def init_actions(self):
         self.action_open_file.triggered.connect(self.open_file)
@@ -89,6 +93,23 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             self.main_plot_items[col] = self.pg_main_plot.plot(
                 x, y, pen=color, name=col
             )
+            self.timeline_plot_items[col] = self.pg_timeline.plot(
+                x, y, pen=color
+            )
+            if len(self.timeline_plot_items.keys()) == 1:
+                # add range view
+                range_len = len(y) / 10
+                self.timeline_plot_range = pg.LinearRegionItem([0, range_len])
+                self.timeline_plot_range.setZValue(-10)
+                self.timeline_plot_range.setBounds([0, len(y)])
+                self.timeline_plot_range.sigRegionChanged.connect(
+                    self.update_plot_from_range
+                )
+                self.pg_timeline.addItem(self.timeline_plot_range)
+                self.pg_main_plot.sigRangeChanged.connect(
+                    self.update_range_from_plot
+                )
+                self.update_plot_from_range()
         else:
             self.lv_data_columns.model().setData(
                 index,
@@ -97,6 +118,13 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             )
             self.pg_main_plot.removeItem(self.main_plot_items[col])
             del self.main_plot_items[col]
+            self.pg_timeline.removeItem(self.timeline_plot_items[col])
+            del self.timeline_plot_items[col]
+            if len(self.timeline_plot_items.keys()) == 0:
+                # remove range view
+                self.pg_timeline.removeItem(self.timeline_plot_range)
+                self.pg_main_plot.sigRangeChanged.disconnect()
+                self.timeline_plot_range.sigRegionChanged.disconnect()
 
     def reset_data(self):
         self.init_plots()
@@ -106,6 +134,16 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                 settings.LV_DATA_COLUMNS_COLOR_INACTIVE,
                 Qt.ItemDataRole.BackgroundRole,
             )
+
+    def update_plot_from_range(self):
+        self.pg_main_plot.setXRange(
+            *self.timeline_plot_range.getRegion(), padding=0
+        )
+
+    def update_range_from_plot(self):
+        self.timeline_plot_range.setRegion(
+            self.pg_main_plot.getViewBox().viewRange()[0]
+        )
 
 
 if __name__ == "__main__":
