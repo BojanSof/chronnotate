@@ -26,9 +26,20 @@
         <property name="title">
          <string>Data</string>
         </property>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
-          <widget class="QListView" name="lv_data_columns"/>
+          <layout class="QVBoxLayout" name="verticalLayout">
+           <item>
+            <widget class="QPushButton" name="btn_reset_data">
+             <property name="text">
+              <string>Reset Data</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QListView" name="lv_data_columns"/>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
@@ -61,7 +72,7 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_6">
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="4,0,1">
+            <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="2,0,1">
              <item>
               <widget class="QListView" name="lv_labels"/>
              </item>

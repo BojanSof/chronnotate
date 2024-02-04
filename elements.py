@@ -60,6 +60,8 @@ class ColorItemElement:
             self.color = f"#{r:02x}{g:02x}{b:02x}{a:02x}"
         else:
             self.color = color
+        self.color = QColor(self.color)
+        self.bg_color = QColor("transparent")
 
     def __repr__(self):
         return f"(label {self.label}, color {self.color})"
@@ -80,11 +82,26 @@ class ColorItemModel(QAbstractListModel):
         if role == Qt.ItemDataRole.DisplayRole:
             return item.label
         elif role == Qt.ItemDataRole.DecorationRole:
-            return QColor(item.color)
+            return item.color
+        elif role == Qt.ItemDataRole.BackgroundRole:
+            return item.bg_color
 
-    def addItems(self):
-        for key in self.modelDict:
-            index = QModelIndex()
-            self.beginInsertRows(index, 0, 0)
-            self.items.append(key)
-        self.endInsertRows()
+    def setData(self, index, value, role):
+        if not index.isValid() or not (0 <= index.row() < len(self.items)):
+            return False
+        item = self.items[index.row()]
+        if role == Qt.ItemDataRole.DisplayRole:
+            if not isinstance(value, str):
+                raise ValueError("value must be string for DisplayRole")
+            item.label = value
+        elif role == Qt.ItemDataRole.DecorationRole:
+            if not isinstance(value, QColor):
+                raise ValueError("value must be QColor for DecorationRole")
+            item.color = value
+        elif role == Qt.ItemDataRole.BackgroundRole:
+            if not isinstance(value, QColor):
+                raise ValueError("value must be QColor for BackgroundRole")
+            item.bg_color = value
+        # emit dataChanged signal, must be done manually
+        self.dataChanged.emit(index, index, [])
+        return True
