@@ -4,7 +4,13 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QFileDialog, QMainWindow, QMessageBox
+from PyQt6.QtWidgets import (
+    QAbstractItemView,
+    QApplication,
+    QFileDialog,
+    QMainWindow,
+    QMessageBox,
+)
 
 import gui_resources  # noqa
 import settings
@@ -17,12 +23,15 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         super().__init__(parent)
         self.setupUi(self)
         self.init_elements()
-        self.init_actions()
         self.init_plots()
+        self.init_labels()
+        self.init_actions()
         self.data = None
 
     def init_elements(self):
         self.btn_reset_data.clicked.connect(self.reset_data)
+        self.btn_create_label.clicked.connect(self.create_label)
+        self.btn_delete_label.clicked.connect(self.delete_label)
         self.lv_data_columns.doubleClicked.connect(self.update_plot)
         self.pg_timeline.setMenuEnabled(False)
         self.pg_timeline.setMouseEnabled(x=False, y=False)
@@ -39,6 +48,14 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.pg_main_plot.addLegend()
         self.main_plot_items = {}
         self.timeline_plot_items = {}
+
+    def init_labels(self):
+        items = []
+        model = ColorItemModel(items)
+        self.lv_labels.setModel(model)
+        self.lv_labels.setEditTriggers(
+            QAbstractItemView.EditTrigger.DoubleClicked
+        )
 
     def init_actions(self):
         self.action_open_file.triggered.connect(self.open_file)
@@ -135,6 +152,17 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                 Qt.ItemDataRole.BackgroundRole,
             )
 
+    def create_label(self):
+        lbl_name = "Label"
+        item = ColorItemElement(lbl_name)
+        model = self.lv_labels.model()
+        model.insertItem(item)
+
+    def delete_label(self):
+        index = self.lv_labels.currentIndex()
+        model = self.lv_labels.model()
+        model.removeItem(index.row())
+
     def update_plot_from_range(self):
         self.pg_main_plot.setXRange(
             *self.timeline_plot_range.getRegion(), padding=0
@@ -145,6 +173,12 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             self.pg_main_plot.getViewBox().viewRange()[0]
         )
 
+
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    chronnotate = Chronnotate()
+    chronnotate.show()
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

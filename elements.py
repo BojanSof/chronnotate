@@ -102,6 +102,34 @@ class ColorItemModel(QAbstractListModel):
             if not isinstance(value, QColor):
                 raise ValueError("value must be QColor for BackgroundRole")
             item.bg_color = value
+        elif role == Qt.ItemDataRole.EditRole:
+            item.label = value
         # emit dataChanged signal, must be done manually
         self.dataChanged.emit(index, index, [])
         return True
+
+    def insertItem(self, item):
+        self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
+        self.items.append(item)
+        self.endInsertRows()
+
+    def insertItemAt(self, index, item):
+        if not (0 <= index < len(self.items)):
+            return False
+        self.beginInsertRows(QModelIndex(), index, index)
+        self.items.insert(index, item)
+        self.endInsertRows()
+        return True
+
+    def removeItem(self, index):
+        if not (0 <= index < len(self.items)):
+            return False
+        self.beginRemoveRows(QModelIndex(), index, index)
+        del self.items[index]
+        self.endRemoveRows()
+
+    def flags(self, index):
+        flags = super().flags(index)
+        if index.isValid():
+            flags |= Qt.ItemFlag.ItemIsEditable
+        return flags
