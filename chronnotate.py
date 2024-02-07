@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -33,6 +33,16 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.btn_create_label.clicked.connect(self.create_label)
         self.btn_delete_label.clicked.connect(self.delete_label)
         self.lv_data_columns.doubleClicked.connect(self.update_plot)
+        self.lv_data_columns.setEditTriggers(
+            QAbstractItemView.EditTrigger.NoEditTriggers
+        )
+        self.lv_labels.setEditTriggers(
+            QAbstractItemView.EditTrigger.DoubleClicked
+        )
+        self.lv_labels.setSelectionMode(
+            QAbstractItemView.SelectionMode.ExtendedSelection
+        )
+        self.lv_labels.viewport().installEventFilter(self)
         self.pg_timeline.setMenuEnabled(False)
         self.pg_timeline.setMouseEnabled(x=False, y=False)
 
@@ -53,12 +63,6 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         items = []
         model = ColorItemModel(items)
         self.lv_labels.setModel(model)
-        self.lv_data_columns.setEditTriggers(
-            QAbstractItemView.EditTrigger.NoEditTriggers
-        )
-        self.lv_labels.setEditTriggers(
-            QAbstractItemView.EditTrigger.DoubleClicked
-        )
 
     def init_actions(self):
         self.action_open_file.triggered.connect(self.open_file)
@@ -160,11 +164,15 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         item = ColorItemElement(lbl_name)
         model = self.lv_labels.model()
         model.insertItem(item)
+        index = model.createIndex(model.rowCount() - 1, 0)
+        self.lv_labels.edit(index)
 
     def delete_label(self):
         index = self.lv_labels.currentIndex()
         model = self.lv_labels.model()
         model.removeItem(index.row())
+        self.lv_labels.clearSelection()
+        self.lv_labels.setCurrentIndex(model.createIndex(-1, -1))
 
     def update_plot_from_range(self):
         self.pg_main_plot.setXRange(
@@ -175,6 +183,19 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.timeline_plot_range.setRegion(
             self.pg_main_plot.getViewBox().viewRange()[0]
         )
+
+    def eventFilter(self, obj, event):
+        if (
+            obj == self.lv_labels.viewport()
+            and event.type() == QEvent.Type.MouseButtonPress
+        ):
+            index = self.lv_labels.indexAt(event.pos())
+            if not index.isValid():
+                self.lv_labels.clearSelection()
+                self.lv_labels.setCurrentIndex(
+                    self.lv_labels.model().createIndex(-1, -1)
+                )
+        return False
 
 
 if __name__ == "__main__":

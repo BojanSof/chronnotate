@@ -103,7 +103,8 @@ class ColorItemModel(QAbstractListModel):
                 raise ValueError("value must be QColor for BackgroundRole")
             item.bg_color = value
         elif role == Qt.ItemDataRole.EditRole:
-            item.label = value
+            if len(value) > 0:
+                item.label = value
         # emit dataChanged signal, must be done manually
         self.dataChanged.emit(index, index, [])
         return True
