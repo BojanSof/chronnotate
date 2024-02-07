@@ -53,6 +53,9 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         items = []
         model = ColorItemModel(items)
         self.lv_labels.setModel(model)
+        self.lv_data_columns.setEditTriggers(
+            QAbstractItemView.EditTrigger.NoEditTriggers
+        )
         self.lv_labels.setEditTriggers(
             QAbstractItemView.EditTrigger.DoubleClicked
         )
