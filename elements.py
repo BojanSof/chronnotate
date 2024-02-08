@@ -1,5 +1,6 @@
 import string
 
+import pyqtgraph as pg
 from PyQt6.QtCore import QAbstractListModel, QModelIndex, Qt, QVariant
 from PyQt6.QtGui import QColor
 
@@ -134,3 +135,17 @@ class ColorItemModel(QAbstractListModel):
         if index.isValid():
             flags |= Qt.ItemFlag.ItemIsEditable
         return flags
+
+
+class AnnotationItem(pg.LinearRegionItem):
+    def __init__(self, values, label, bounds=None):
+        super().__init__(
+            values=values,
+            orientation="vertical",
+            movable=True,
+            swapMode="sort",
+            bounds=bounds,
+        )
+        # Set default z-value to 0 to be behind other items in scene
+        self.setZValue(0)
+        self.label_item = pg.TextItem(text=label, anchor=(0.5, 0.5))

@@ -27,6 +27,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.init_labels()
         self.init_actions()
         self.data = None
+        self.labels = []
 
     def init_elements(self):
         self.btn_reset_data.clicked.connect(self.reset_data)
@@ -45,6 +46,8 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.lv_labels.viewport().installEventFilter(self)
         self.pg_timeline.setMenuEnabled(False)
         self.pg_timeline.setMouseEnabled(x=False, y=False)
+        self.pg_main_plot.viewport().installEventFilter(self)
+        self.pg_main_plot.hideButtons()
 
     def init_plots(self):
         self.pg_main_plot.setBackground("white")
@@ -168,9 +171,14 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.lv_labels.edit(index)
 
     def delete_label(self):
-        index = self.lv_labels.currentIndex()
         model = self.lv_labels.model()
-        model.removeItem(index.row())
+        removing = True
+        while removing:
+            indexes = self.lv_labels.selectedIndexes()
+            if len(indexes) == 0:
+                removing = False
+            else:
+                model.removeItem(indexes[0].row())
         self.lv_labels.clearSelection()
         self.lv_labels.setCurrentIndex(model.createIndex(-1, -1))
 
@@ -195,7 +203,14 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                 self.lv_labels.setCurrentIndex(
                     self.lv_labels.model().createIndex(-1, -1)
                 )
-        return False
+                return True
+        elif (
+            obj == self.pg_main_plot.viewport()
+            and event.type() == QEvent.Type.MouseButtonPress
+            and event.button() == Qt.MouseButton.LeftButton
+        ):
+            return True
+        return super().eventFilter(obj, event)
 
 
 if __name__ == "__main__":
