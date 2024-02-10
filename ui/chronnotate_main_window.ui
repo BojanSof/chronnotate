@@ -55,7 +55,7 @@
            <item>
             <layout class="QVBoxLayout" name="verticalLayout_3" stretch="4,1">
              <item>
-              <widget class="PlotWidget" name="pg_main_plot" native="true"/>
+              <widget class="AnnotationPlotWidget" name="pg_main_plot" native="true"/>
              </item>
              <item>
               <widget class="PlotWidget" name="pg_timeline" native="true"/>
@@ -194,6 +194,12 @@
    <class>PlotWidget</class>
    <extends>QWidget</extends>
    <header>pyqtgraph</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>AnnotationPlotWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">elements</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

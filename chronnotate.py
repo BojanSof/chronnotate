@@ -46,7 +46,6 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.lv_labels.viewport().installEventFilter(self)
         self.pg_timeline.setMenuEnabled(False)
         self.pg_timeline.setMouseEnabled(x=False, y=False)
-        self.pg_main_plot.viewport().installEventFilter(self)
         self.pg_main_plot.hideButtons()
 
     def init_plots(self):
@@ -192,7 +191,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             self.pg_main_plot.getViewBox().viewRange()[0]
         )
 
-    def eventFilter(self, obj, event):
+    def eventFilter(self, obj, event: QEvent):
         if (
             obj == self.lv_labels.viewport()
             and event.type() == QEvent.Type.MouseButtonPress
@@ -204,12 +203,20 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                     self.lv_labels.model().createIndex(-1, -1)
                 )
                 return True
-        elif (
-            obj == self.pg_main_plot.viewport()
-            and event.type() == QEvent.Type.MouseButtonPress
-            and event.button() == Qt.MouseButton.LeftButton
-        ):
-            return True
+        # elif obj == self.pg_main_plot.viewport():
+        #     if (
+        #         event.type() == QEvent.Type.MouseButtonPress
+        #         and event.button() == Qt.MouseButton.LeftButton
+        #     ):
+        #         return True
+        #     elif event.type() == QEvent.Type.GraphicsSceneMouseMove:
+        #         event.accept()
+        #         if event.button() == Qt.MouseButton.LeftButton:
+        #             if event.isStart():
+        #                 print("start")
+        #             elif event.isFinish():
+        #                 print("done")
+        #             return True
         return super().eventFilter(obj, event)
 
 

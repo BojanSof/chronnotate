@@ -44,7 +44,7 @@ class Ui_main_window(object):
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout()
         self.verticalLayout_3.setObjectName("verticalLayout_3")
-        self.pg_main_plot = PlotWidget(parent=self.gb_plots)
+        self.pg_main_plot = AnnotationPlotWidget(parent=self.gb_plots)
         self.pg_main_plot.setObjectName("pg_main_plot")
         self.verticalLayout_3.addWidget(self.pg_main_plot)
         self.pg_timeline = PlotWidget(parent=self.gb_plots)
@@ -144,4 +144,5 @@ class Ui_main_window(object):
         self.action_tutorial.setText(_translate("main_window", "Tutorial"))
         self.action_about.setText(_translate("main_window", "About"))
         self.action_plot_settings.setText(_translate("main_window", "Plot"))
+from elements import AnnotationPlotWidget
 from pyqtgraph import PlotWidget

@@ -1,0 +1,13 @@
+{
+    "configurations": [
+        {
+            "name": "Python Debug Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${file}",
+            "cwd":"${fileDirname}",
+            "justMyCode": false,
+            "console": "integratedTerminal"
+        }
+    ]
+}
