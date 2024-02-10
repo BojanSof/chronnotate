@@ -156,7 +156,7 @@ class AnnotationRegion(pg.LinearRegionItem):
             orientation="vertical",
             movable=True,
             swapMode="sort",
-            bounds=(0, 100),
+            bounds=(0, 1000000),
         )
         self.setZValue(0)
 
@@ -209,7 +209,7 @@ class AnnotationRegion(pg.LinearRegionItem):
 
     def remove(self):
         self.removeRequested.emit(self)
-        vb = self.plot_widget.plotItem.getViewBox()
+        vb = self.plot_widget.plotItem.vb
         if vb and self.label_item in vb.addedItems:
             vb.removeItem(self.label_item)
 
@@ -275,7 +275,7 @@ class AnnotationRegion(pg.LinearRegionItem):
 
     def update_label_pos(self):
         rgn = self.getRegion()
-        vb = self.plot_widget.plotItem.getViewBox()
+        vb = self.plot_widget.plotItem.vb
         if vb:
             ymax = vb.viewRange()[1][1]
             self.label_item.setPos(sum(rgn) / 2, ymax - 0.3)
@@ -284,7 +284,6 @@ class AnnotationRegion(pg.LinearRegionItem):
 class ViewBox(pg.ViewBox):
     def __init__(self):
         super().__init__()
-        self.enableAutoRange(enable=False, x=False, y=False)
         self._drag_start = None
         self._drag_region = None
         self.plot_widget = None
@@ -324,6 +323,7 @@ class ViewBox(pg.ViewBox):
                 x_to = self.mapSceneToView(event.scenePos()).x()
                 with SignalBlocker(self._drag_region):
                     self._drag_region.setRegion((self._drag_start, x_to))
+                self._drag_region.update_label_pos()
         else:
             super().mouseDragEvent(event)
 

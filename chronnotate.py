@@ -203,20 +203,6 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                     self.lv_labels.model().createIndex(-1, -1)
                 )
                 return True
-        # elif obj == self.pg_main_plot.viewport():
-        #     if (
-        #         event.type() == QEvent.Type.MouseButtonPress
-        #         and event.button() == Qt.MouseButton.LeftButton
-        #     ):
-        #         return True
-        #     elif event.type() == QEvent.Type.GraphicsSceneMouseMove:
-        #         event.accept()
-        #         if event.button() == Qt.MouseButton.LeftButton:
-        #             if event.isStart():
-        #                 print("start")
-        #             elif event.isFinish():
-        #                 print("done")
-        #             return True
         return super().eventFilter(obj, event)
 
 
