@@ -68,6 +68,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
     def init_labels(self):
         items = []
         model = ColorItemModel(items)
+        model.dataChanged.connect(self.update_annotation_regions_labels)
         self.lv_labels.setModel(model)
 
     def init_actions(self):
@@ -204,6 +205,16 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.timeline_plot_range.setRegion(
             self.pg_main_plot.getViewBox().viewRange()[0]
         )
+
+    def update_annotation_regions_labels(self, index, _):
+        model = self.lv_labels.model()
+        old_label = model.items[index.row()].prev_label
+        new_label = model.data(index, Qt.ItemDataRole.DisplayRole)
+        for region in self.annotation_regions:
+            labels = region.label.split(settings.LABEL_SEPARATOR)
+            labels = [lab if lab != old_label else new_label for lab in labels]
+            label = settings.LABEL_SEPARATOR.join(labels)
+            region.update_label(label)
 
     def eventFilter(self, obj, event: QEvent):
         if (

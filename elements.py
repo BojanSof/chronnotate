@@ -179,6 +179,7 @@ class ColorItemElement:
             raise ValueError("color must be valid RGB or RGBA hex string")
 
         self.label = label
+        self.prev_label = None
         if color is None:
             self.color = ColorItemElement.__COLORS[ColorItemElement.__i_COLORS]
             ColorItemElement.__i_COLORS = (
@@ -233,6 +234,7 @@ class ColorItemModel(QAbstractListModel):
             item.bg_color = value
         elif role == Qt.ItemDataRole.EditRole:
             if len(value) > 0:
+                item.prev_label = item.label
                 item.label = value
         # emit dataChanged signal, must be done manually
         self.dataChanged.emit(index, index, [])
@@ -287,8 +289,8 @@ class AnnotationRegion(pg.LinearRegionItem):
         self.selected = False
 
         self.base_color = color
-        self.hover_color = color.darker(200)
-        self.text_color = color.darker(300)
+        self.hover_color = color.darker(75)
+        self.text_color = color.darker(150)
         self.base_color.setAlpha(75)
         self.hover_color.setAlpha(150)
         self.text_color.setAlpha(255)
@@ -427,19 +429,28 @@ class ViewBox(pg.ViewBox):
                             for index in selected_indexes
                         ]
                     )
-                    color = QColor()
-                    for index in selected_indexes:
+                    if len(selected_indexes) == 1:
                         label_color = model.data(
-                            index,
+                            selected_indexes[0],
                             Qt.ItemDataRole.DecorationRole,
                         )
-                        color.setRed(color.red() // 2 + label_color.red() // 2)
-                        color.setGreen(
-                            color.green() // 2 + label_color.green() // 2
-                        )
-                        color.setBlue(
-                            color.blue() // 2 + label_color.blue() // 2
-                        )
+                        color = QColor(label_color)
+                    else:
+                        color = QColor()
+                        for index in selected_indexes:
+                            label_color = model.data(
+                                index,
+                                Qt.ItemDataRole.DecorationRole,
+                            )
+                            color.setRed(
+                                color.red() // 2 + label_color.red() // 2
+                            )
+                            color.setGreen(
+                                color.green() // 2 + label_color.green() // 2
+                            )
+                            color.setBlue(
+                                color.blue() // 2 + label_color.blue() // 2
+                            )
                     self._drag_start = self.mapSceneToView(
                         event.lastScenePos()
                     ).x()
