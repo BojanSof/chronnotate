@@ -27,7 +27,6 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.init_labels()
         self.init_actions()
         self.data = None
-        self.labels = []
 
     def init_elements(self):
         self.btn_reset_data.clicked.connect(self.reset_data)
@@ -47,6 +46,11 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.pg_timeline.setMenuEnabled(False)
         self.pg_timeline.setMouseEnabled(x=False, y=False)
         self.pg_main_plot.hideButtons()
+
+        self.annotation_regions = []
+        self.pg_main_plot.set_annotation_regions_requirements(
+            self.annotation_regions, self.lv_labels
+        )
 
     def init_plots(self):
         self.pg_main_plot.setBackground("white")
@@ -177,7 +181,17 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             if len(indexes) == 0:
                 removing = False
             else:
+                label = model.data(indexes[0], Qt.ItemDataRole.DisplayRole)
                 model.removeItem(indexes[0].row())
+                regions_to_remove = []
+                for annotation_region in self.annotation_regions:
+                    labels = annotation_region.label.split(
+                        settings.LABEL_SEPARATOR
+                    )
+                    if label in labels:
+                        regions_to_remove.append(annotation_region)
+                for region in regions_to_remove:
+                    region.remove()
         self.lv_labels.clearSelection()
         self.lv_labels.setCurrentIndex(model.createIndex(-1, -1))
 

@@ -10,13 +10,12 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtGui import QColor
 
+from settings import LABEL_SEPARATOR
 from utils import SignalBlocker
 
 
 class ColorItemElement:
     __COLORS = [
-        "#1f77b4",
-        "#ff7f0e",
         "#2ca02c",
         "#d62728",
         "#9467bd",
@@ -150,7 +149,7 @@ class AnnotationRegion(pg.LinearRegionItem):
     gotSelected = pyqtSignal(object)
     removeRequested = pyqtSignal(object)
 
-    def __init__(self, plot_widget, label, values):
+    def __init__(self, plot_widget, label, color, values):
         super().__init__(
             values=values,
             orientation="vertical",
@@ -166,8 +165,14 @@ class AnnotationRegion(pg.LinearRegionItem):
         self.old_onset = values[0]
         self.selected = False
 
+        self.base_color = color
+        self.hover_color = color.darker(200)
+        self.text_color = color.darker(300)
+        self.base_color.setAlpha(75)
+        self.hover_color.setAlpha(150)
+        self.text_color.setAlpha(255)
+
         self.label_item = pg.TextItem(text=label, anchor=(0.5, 0.5))
-        # self.label_item.setFont(_q_font(10, bold=True))
         self.sigRegionChanged.connect(self.update_label_pos)
 
         self.update_color()
@@ -179,13 +184,6 @@ class AnnotationRegion(pg.LinearRegionItem):
         self.update_label_pos()
 
     def update_color(self):
-        # todo: get this colors from label settings
-        self.base_color = QColor("#0FB3EF")
-        self.hover_color = QColor("#0E9BCE")
-        self.text_color = QColor("#0B7FA9")
-        self.base_color.setAlpha(75)
-        self.hover_color.setAlpha(150)
-        self.text_color.setAlpha(255)
         kwargs = dict(color=self.hover_color, width=2)
         self.line_pen = pg.mkPen(**kwargs)
         self.hover_pen = pg.mkPen(color=self.text_color, width=2)
@@ -201,6 +199,13 @@ class AnnotationRegion(pg.LinearRegionItem):
         self.label = label
         self.label_item.setText(label)
         self.label_item.update()
+
+    def update_label_pos(self):
+        rgn = self.getRegion()
+        vb = self.plot_widget.plotItem.vb
+        if vb:
+            ymax = vb.viewRange()[1][1]
+            self.label_item.setPos(sum(rgn) / 2, ymax - 0.3)
 
     def update_visible(self, visible):
         """Update if annotation-region is visible."""
@@ -234,13 +239,13 @@ class AnnotationRegion(pg.LinearRegionItem):
         else:
             event.ignore()
 
-    def mouseDragEvent(self, ev):
-        if not self.movable or not ev.button() == Qt.MouseButton.LeftButton:
+    def mouseDragEvent(self, event):
+        if not self.movable or not event.button() == Qt.MouseButton.LeftButton:
             return
-        ev.accept()
+        event.accept()
 
-        if ev.isStart():
-            bdp = ev.buttonDownPos()
+        if event.isStart():
+            bdp = event.buttonDownPos()
             self.cursorOffsets = [line.pos() - bdp for line in self.lines]
             self.startPositions = [line.pos() for line in self.lines]
             self.moving = True
@@ -248,7 +253,7 @@ class AnnotationRegion(pg.LinearRegionItem):
         if not self.moving:
             return
 
-        new_pos = [pos + ev.pos() for pos in self.cursorOffsets]
+        new_pos = [pos + event.pos() for pos in self.cursorOffsets]
         idx = 0 if new_pos[0].x() <= new_pos[1].x() else 1
         if new_pos[idx].x() < self.lines[idx].bounds()[0]:
             shift = self.lines[idx].bounds()[0] - new_pos[idx].x()
@@ -267,18 +272,11 @@ class AnnotationRegion(pg.LinearRegionItem):
                 line.setPos(pos)
         self.prepareGeometryChange()
 
-        if ev.isFinish():
+        if event.isFinish():
             self.moving = False
             self.sigRegionChangeFinished.emit(self)
         else:
             self.sigRegionChanged.emit(self)
-
-    def update_label_pos(self):
-        rgn = self.getRegion()
-        vb = self.plot_widget.plotItem.vb
-        if vb:
-            ymax = vb.viewRange()[1][1]
-            self.label_item.setPos(sum(rgn) / 2, ymax - 0.3)
 
 
 class ViewBox(pg.ViewBox):
@@ -295,49 +293,83 @@ class ViewBox(pg.ViewBox):
         """Customize mouse drag events."""
         event.accept()
         if event.button() == Qt.MouseButton.LeftButton:
-            if event.isStart():
-                label = "Label"
-                self._drag_start = self.mapSceneToView(
-                    event.lastScenePos()
-                ).x()
-                self._drag_start = (
-                    0 if self._drag_start < 0 else self._drag_start
-                )
-                drag_stop = self.mapSceneToView(event.scenePos()).x()
-                self._drag_region = AnnotationRegion(
-                    plot_widget=self.plot_widget,
-                    label=label,
-                    values=(self._drag_start, drag_stop),
-                )
-            elif event.isFinish():
-                drag_stop = self.mapSceneToView(event.scenePos()).x()
-                drag_stop = 0 if drag_stop < 0 else drag_stop
-                self._drag_region.setRegion((self._drag_start, drag_stop))
-                # plot_onset = min(self._drag_start, drag_stop)
-                # plot_offset = max(self._drag_start, drag_stop)
-                # duration = abs(self._drag_start - drag_stop)
-
-                self._drag_region.select(True)
-                self._drag_region.setZValue(2)
-            else:
-                x_to = self.mapSceneToView(event.scenePos()).x()
-                with SignalBlocker(self._drag_region):
-                    self._drag_region.setRegion((self._drag_start, x_to))
-                self._drag_region.update_label_pos()
+            if self.plot_widget.annotation_regions_requirements_satisfied():
+                if event.isStart():
+                    lv_labels = self.plot_widget.lv_labels
+                    selected_indexes = lv_labels.selectedIndexes()
+                    model = lv_labels.model()
+                    label = LABEL_SEPARATOR.join(
+                        [
+                            model.data(index, Qt.ItemDataRole.DisplayRole)
+                            for index in selected_indexes
+                        ]
+                    )
+                    color = QColor()
+                    for index in selected_indexes:
+                        label_color = model.data(
+                            index,
+                            Qt.ItemDataRole.DecorationRole,
+                        )
+                        color.setRed(color.red() // 2 + label_color.red() // 2)
+                        color.setGreen(
+                            color.green() // 2 + label_color.green() // 2
+                        )
+                        color.setBlue(
+                            color.blue() // 2 + label_color.blue() // 2
+                        )
+                    self._drag_start = self.mapSceneToView(
+                        event.lastScenePos()
+                    ).x()
+                    self._drag_start = (
+                        0 if self._drag_start < 0 else self._drag_start
+                    )
+                    drag_stop = self.mapSceneToView(event.scenePos()).x()
+                    self._drag_region = AnnotationRegion(
+                        plot_widget=self.plot_widget,
+                        label=label,
+                        color=color,
+                        values=(self._drag_start, drag_stop),
+                    )
+                    self._drag_region.removeRequested.connect(
+                        self.remove_region
+                    )
+                    self.plot_widget.annotation_regions.append(
+                        self._drag_region
+                    )
+                elif event.isFinish():
+                    drag_stop = self.mapSceneToView(event.scenePos()).x()
+                    drag_stop = 0 if drag_stop < 0 else drag_stop
+                    self._drag_region.setRegion((self._drag_start, drag_stop))
+                    self._drag_region.select(True)
+                    self._drag_region.setZValue(2)
+                else:
+                    x_to = self.mapSceneToView(event.scenePos()).x()
+                    with SignalBlocker(self._drag_region):
+                        self._drag_region.setRegion((self._drag_start, x_to))
+                    self._drag_region.update_label_pos()
         else:
             super().mouseDragEvent(event)
 
-    # def mouseClickEvent(self, event):
-    #     """Customize mouse click events."""
-    #     # If we want the context-menu back, uncomment following line
-    #     super().mouseClickEvent(event)
-    #     if event.button() == Qt.MouseButton.LeftButton:
-    #         print("Left click")
-    #     elif event.button() == Qt.MouseButton.RightButton:
-    #         print("Right click")
+    def remove_region(self, region: AnnotationRegion):
+        self.plot_widget.removeItem(region)
+        self.plot_widget.removeItem(region.label_item)
+        self.plot_widget.annotation_regions.remove(region)
 
 
 class AnnotationPlotWidget(pg.PlotWidget):
     def __init__(self, parent=None):
         super().__init__(parent, viewBox=ViewBox())
         self.plotItem.vb.set_plot_widget(self)
+        self.annotation_regions = None
+        self.lv_labels = None
+
+    def set_annotation_regions_requirements(self, collection, lv_labels):
+        self.annotation_regions = collection
+        self.lv_labels = lv_labels
+
+    def annotation_regions_requirements_satisfied(self):
+        return (
+            self.annotation_regions is not None
+            and self.lv_labels is not None
+            and len(self.lv_labels.selectedIndexes()) > 0
+        )
