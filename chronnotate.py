@@ -73,6 +73,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
 
     def init_actions(self):
         self.action_open_file.triggered.connect(self.open_file)
+        self.action_save_file.triggered.connect(self.save_file)
         self.action_exit.triggered.connect(self.close)
 
     def open_file(self):
@@ -85,6 +86,17 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         if path != "":
             self.load_file(path)
 
+    def save_file(self):
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Select output file to save annotated data",
+            "",
+            "All files (*);;CSV (*csv);;Text files (*txt)",
+        )
+        if path != "":
+            labeled_data = self.create_labeled_data()
+            labeled_data.to_csv(path, index=False)
+
     def load_file(self, path):
         try:
             data = pd.read_csv(path)
@@ -93,6 +105,20 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             QMessageBox.critical(
                 self, "File error", f"Could not load file {path}"
             )
+
+    def create_labeled_data(self):
+        labels = pd.Series(["" for _ in range(len(self.data))]).astype(
+            "string"
+        )
+        for region in self.annotation_regions:
+            start, end = region.getRegion()
+            start = int(np.rint(start))
+            end = int(np.rint(end))
+            label = region.label
+            labels[start:end] = label
+        labeled_data = self.data.copy()
+        labeled_data[settings.LABEL_COLUMN] = labels
+        return labeled_data
 
     def fill_elements_from_data(self, data: pd.DataFrame):
         self.data = data

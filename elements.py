@@ -327,8 +327,8 @@ class AnnotationRegion(pg.LinearRegionItem):
         rgn = self.getRegion()
         vb = self.plot_widget.plotItem.vb
         if vb:
-            ymax = vb.viewRange()[1][1]
-            self.label_item.setPos(sum(rgn) / 2, ymax - 0.3)
+            yvb = vb.viewRange()[1]
+            self.label_item.setPos(sum(rgn) / 2, sum(yvb) / 2)
 
     def update_visible(self, visible):
         self.setVisible(visible)
@@ -466,6 +466,9 @@ class ViewBox(pg.ViewBox):
                     )
                     self._drag_region.removeRequested.connect(
                         self.remove_region
+                    )
+                    self.sigYRangeChanged.connect(
+                        self._drag_region.update_label_pos
                     )
                     self.plot_widget.annotation_regions.append(
                         self._drag_region
