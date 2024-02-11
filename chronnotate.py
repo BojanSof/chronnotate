@@ -3,6 +3,7 @@ import sys
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
+from pandas.api.types import is_numeric_dtype
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import (
     QAbstractItemView,
@@ -122,7 +123,11 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
 
     def fill_elements_from_data(self, data: pd.DataFrame):
         self.data = data
-        items = [ColorItemElement(col) for col in self.data.columns]
+        items = [
+            ColorItemElement(col)
+            for col in self.data.columns
+            if is_numeric_dtype(self.data[col])
+        ]
         model = ColorItemModel(items)
         self.lv_data_columns.setModel(model)
 
