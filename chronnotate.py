@@ -71,6 +71,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         model = ColorItemModel(items)
         model.dataChanged.connect(self.update_annotation_regions_labels)
         self.lv_labels.setModel(model)
+        self.label_counter = 1
 
     def init_actions(self):
         self.action_open_file.triggered.connect(self.open_file)
@@ -198,7 +199,8 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             )
 
     def create_label(self):
-        lbl_name = "Label"
+        lbl_name = f"Label {self.label_counter}"
+        self.label_counter += 1
         item = ColorItemElement(lbl_name)
         model = self.lv_labels.model()
         model.insertItem(item)
