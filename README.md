@@ -26,6 +26,8 @@ pyinstaller src/chronnotate.py --onefile --windowed --icon="ui/resources/icon.ic
 
 ## How to use
 
+![Chronnotate preview](images/prreview-simple.png)
+
 1. Load CSV file
 2. Select the signals that you want to show during labeling from the list on the left side
 3. Add labels in the bottom
