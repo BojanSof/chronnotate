@@ -1,8 +1,12 @@
 import sys
 
+import gui_resources  # noqa
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
+import settings
+from chronnotate_main_window import Ui_main_window as ChronnotateMainWindow
+from elements import ColorItemElement, ColorItemModel
 from pandas.api.types import is_numeric_dtype
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import (
@@ -12,11 +16,6 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QMessageBox,
 )
-
-import gui_resources  # noqa
-import settings
-from chronnotate_main_window import Ui_main_window as ChronnotateMainWindow
-from elements import ColorItemElement, ColorItemModel
 
 
 class Chronnotate(QMainWindow, ChronnotateMainWindow):
@@ -264,14 +263,12 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         return super().eventFilter(obj, event)
 
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     chronnotate = Chronnotate()
     chronnotate.show()
     sys.exit(app.exec())
 
+
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    chronnotate = Chronnotate()
-    chronnotate.show()
-    sys.exit(app.exec())
+    main()
