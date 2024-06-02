@@ -14,7 +14,11 @@ class Ui_main_window(object):
         main_window.setObjectName("main_window")
         main_window.resize(800, 600)
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap(":/icons/resources/icon.ico"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        icon.addPixmap(
+            QtGui.QPixmap(":/icons/resources/icon.ico"),
+            QtGui.QIcon.Mode.Normal,
+            QtGui.QIcon.State.Off,
+        )
         main_window.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(parent=main_window)
         self.centralwidget.setObjectName("centralwidget")
@@ -63,14 +67,23 @@ class Ui_main_window(object):
         self.lv_labels = QtWidgets.QListView(parent=self.gb_annotations)
         self.lv_labels.setObjectName("lv_labels")
         self.horizontalLayout_5.addWidget(self.lv_labels)
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
+        spacerItem = QtWidgets.QSpacerItem(
+            40,
+            20,
+            QtWidgets.QSizePolicy.Policy.Expanding,
+            QtWidgets.QSizePolicy.Policy.Minimum,
+        )
         self.horizontalLayout_5.addItem(spacerItem)
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.btn_create_label = QtWidgets.QPushButton(parent=self.gb_annotations)
+        self.btn_create_label = QtWidgets.QPushButton(
+            parent=self.gb_annotations
+        )
         self.btn_create_label.setObjectName("btn_create_label")
         self.verticalLayout_4.addWidget(self.btn_create_label)
-        self.btn_delete_label = QtWidgets.QPushButton(parent=self.gb_annotations)
+        self.btn_delete_label = QtWidgets.QPushButton(
+            parent=self.gb_annotations
+        )
         self.btn_delete_label.setObjectName("btn_delete_label")
         self.verticalLayout_4.addWidget(self.btn_delete_label)
         self.horizontalLayout_5.addLayout(self.verticalLayout_4)
@@ -133,16 +146,24 @@ class Ui_main_window(object):
         self.gb_plots.setTitle(_translate("main_window", "Plots"))
         self.gb_annotations.setTitle(_translate("main_window", "Annotations"))
         self.btn_create_label.setText(_translate("main_window", "+ Add label"))
-        self.btn_delete_label.setText(_translate("main_window", "- Delete label"))
+        self.btn_delete_label.setText(
+            _translate("main_window", "- Delete label")
+        )
         self.menuFile.setTitle(_translate("main_window", "File"))
         self.menuSettings.setTitle(_translate("main_window", "Settings"))
         self.menuHelp.setTitle(_translate("main_window", "Help"))
         self.action_open_file.setText(_translate("main_window", "Open File"))
-        self.action_save_file.setText(_translate("main_window", "Save File with Annotations"))
+        self.action_save_file.setText(
+            _translate("main_window", "Save File with Annotations")
+        )
         self.action_close_file.setText(_translate("main_window", "Close File"))
         self.action_exit.setText(_translate("main_window", "Exit"))
         self.action_tutorial.setText(_translate("main_window", "Tutorial"))
         self.action_about.setText(_translate("main_window", "About"))
         self.action_plot_settings.setText(_translate("main_window", "Plot"))
-from elements import AnnotationPlotWidget
+
+
 from pyqtgraph import PlotWidget
+
+
+from .elements import AnnotationPlotWidget

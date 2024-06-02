@@ -1,3 +1,9 @@
+[build-system]
+build-backend = "hatchling.build"
+requires = [
+    "hatchling",
+    "hatch-vcs"
+]
 [project]
 name = "chronnotate"
 description = "Tool for annotating time-series data"
@@ -40,10 +46,24 @@ formatting = [
     "black==24.1.1",
     "isort==5.13.2"
 ]
-dev = ["chronnotate[gui, linting, formatting]"]
+"bundling" = [
+    "pyinstaller==6.7.0"
+]
+dev = ["chronnotate[gui, linting, formatting, bundling]"]
 
-[project.scripts]
-chronnotate = "chronnotate:main"
+[project.gui-scripts]
+chronnotate = "chronnotate.chronnotate:main"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/chronnotate/version.py"
+
+[tool.hatch.build]
+artifacts = [
+  "src/chronnotate/version.py",
+]
 
 [tool.black]
 line-length = 79

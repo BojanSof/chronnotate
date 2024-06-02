@@ -15,6 +15,15 @@ Ensure you have Python 3.11 installed, and preferrably use environment (venv, co
 2. Install required dependencies (`[dev]` for development tools, like linter and formatter): `pip install .[dev]`
 3. Launch the app by running `chronnotate`.
 
+## Building executable
+
+It is also possible to distribute the app as a single executable, holding all the dependencies.
+Such executable can be created with `pyinstaller`:
+
+```
+pyinstaller src/chronnotate.py --onefile --windowed --icon="ui/resources/icon.ico" --exclude PySide6
+```
+
 ## How to use
 
 1. Load CSV file

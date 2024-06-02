@@ -10,8 +10,8 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtGui import QColor
 
-from settings import LABEL_SEPARATOR
-from utils import SignalBlocker
+from .settings import LABEL_SEPARATOR
+from .utils import SignalBlocker
 
 
 class ColorItemElement:
