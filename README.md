@@ -28,10 +28,10 @@ pyinstaller src/chronnotate.py --onefile --windowed --icon="ui/resources/icon.ic
 
 ![Chronnotate preview](images/prreview-simple.png)
 
-1. Load CSV file
-2. Select the signals that you want to show during labeling from the list on the left side
-3. Add labels in the bottom
-4. Select label(s) from the list and add them by left mouse click and dragging on the main plot area
+1. Load CSV file.
+2. Select the signals that you want to show during labeling from the list on the left side.
+3. Add labels in the bottom.
+4. Select label(s) from the list and add them by left mouse click and dragging on the main plot area. Remove by right click on the labels.
 
 The main plot can be scaled by holding the right mouse click and moving in x or y axis direction.
 Panning is possible by clickin on the third mouse button (mouse-wheel) and dragging in the plot area.
