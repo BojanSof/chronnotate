@@ -8,6 +8,7 @@ from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QDialog,
     QFileDialog,
     QMainWindow,
     QMessageBox,
@@ -17,6 +18,7 @@ from . import gui_resources  # noqa
 from . import settings
 from .chronnotate_main_window import Ui_main_window as ChronnotateMainWindow
 from .elements import ColorItemElement, ColorItemModel
+from .file_dialogs import OpenDialog
 
 
 class Chronnotate(QMainWindow, ChronnotateMainWindow):
@@ -86,7 +88,12 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             "All files (*);;CSV (*csv);;Text files (*txt)",
         )
         if path != "":
-            self.load_file(path)
+            settings_dialog = OpenDialog()
+            if settings_dialog.exec() == QDialog.DialogCode.Accepted:
+                skip_lines = settings_dialog.get_skip_lines()
+                col_label = settings_dialog.get_label_column_name()
+                print(f"Skip lines: {skip_lines}, label column: {col_label}")
+                self.load_file(path, skip_lines, col_label)
 
     def save_file(self):
         path, _ = QFileDialog.getSaveFileName(
@@ -99,9 +106,13 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             labeled_data = self.create_labeled_data()
             labeled_data.to_csv(path, index=False)
 
-    def load_file(self, path):
+    def load_file(self, path, skip_lines, col_label):
         try:
-            data = pd.read_csv(path)
+            data = pd.read_csv(path, skiprows=skip_lines)
+            if len(col_label) > 0:
+                self.label_column = col_label
+            else:
+                self.label_column = settings.DEFAULT_LABEL_COLUMN
             self.fill_elements_from_data(data)
         except Exception:
             QMessageBox.critical(
@@ -119,7 +130,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             label = region.label
             labels[start:end] = label
         labeled_data = self.data.copy()
-        labeled_data[settings.LABEL_COLUMN] = labels
+        labeled_data[self.label_column] = labels
         return labeled_data
 
     def fill_elements_from_data(self, data: pd.DataFrame):
