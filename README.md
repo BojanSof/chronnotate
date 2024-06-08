@@ -21,7 +21,7 @@ It is also possible to distribute the app as a single executable, holding all th
 Such executable can be created with `pyinstaller`:
 
 ```
-pyinstaller src/chronnotate.py --onefile --windowed --icon="ui/resources/icon.ico" --exclude PySide6
+pyinstaller src/app.py --name chronnotate --onefile --windowed --icon="ui/resources/icon.ico" --exclude PySide6
 ```
 
 ## How to use
