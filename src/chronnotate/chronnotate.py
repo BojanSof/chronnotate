@@ -14,10 +14,10 @@ from PyQt6.QtWidgets import (
     QMessageBox,
 )
 
-from . import gui_resources  # noqa
-from . import settings
+from . import gui_resources, settings  # noqa
 from .chronnotate_main_window import Ui_main_window as ChronnotateMainWindow
-from .elements import ColorItemElement, ColorItemModel
+from .data_utils import find_subsegments
+from .elements import AnnotationRegion, ColorItemElement, ColorItemModel
 from .file_dialogs import OpenDialog
 
 
@@ -33,7 +33,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
 
     def init_elements(self):
         self.btn_reset_data.clicked.connect(self.reset_data)
-        self.btn_create_label.clicked.connect(self.create_label)
+        self.btn_create_label.clicked.connect(lambda: self.create_label(None))
         self.btn_delete_label.clicked.connect(self.delete_label)
         self.lv_data_columns.doubleClicked.connect(self.update_plot)
         self.lv_data_columns.setEditTriggers(
@@ -92,7 +92,6 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             if settings_dialog.exec() == QDialog.DialogCode.Accepted:
                 skip_lines = settings_dialog.get_skip_lines()
                 col_label = settings_dialog.get_label_column_name()
-                print(f"Skip lines: {skip_lines}, label column: {col_label}")
                 self.load_file(path, skip_lines, col_label)
 
     def save_file(self):
@@ -138,10 +137,29 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         items = [
             ColorItemElement(col)
             for col in self.data.columns
-            if is_numeric_dtype(self.data[col])
+            if is_numeric_dtype(self.data[col]) and col != self.label_column
         ]
         model = ColorItemModel(items)
         self.lv_data_columns.setModel(model)
+        if self.label_column in self.data.columns:
+            segments = find_subsegments(self.data, self.label_column)
+            labels = self.data[self.label_column].dropna().unique()
+            label_colors = {}
+            for label in labels:
+                item = self.create_label(label)
+                label_colors[label] = item.color
+            for segment in segments:
+                rgn = AnnotationRegion(
+                    self.pg_main_plot,
+                    segment["label"],
+                    label_colors[segment["label"]],
+                    (segment["start"], segment["end"]),
+                )
+                self.pg_main_plot.plotItem.vb.sigYRangeChanged.connect(
+                    rgn.update_label_pos
+                )
+                rgn.select(True)
+                self.annotation_regions.append(rgn)
 
     def update_plot(self, index):
         col = self.lv_data_columns.model().data(
@@ -209,14 +227,16 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                 Qt.ItemDataRole.BackgroundRole,
             )
 
-    def create_label(self):
-        lbl_name = f"Label {self.label_counter}"
+    def create_label(self, label=None):
+        lbl_name = f"Label {self.label_counter}" if label is None else label
         self.label_counter += 1
         item = ColorItemElement(lbl_name)
         model = self.lv_labels.model()
         model.insertItem(item)
         index = model.createIndex(model.rowCount() - 1, 0)
-        self.lv_labels.edit(index)
+        if label is None:
+            self.lv_labels.edit(index)
+        return item
 
     def delete_label(self):
         model = self.lv_labels.model()
