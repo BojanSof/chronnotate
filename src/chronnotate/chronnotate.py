@@ -32,7 +32,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.data = None
 
     def init_elements(self):
-        self.btn_reset_data.clicked.connect(self.reset_data)
+        self.btn_deselect_all.clicked.connect(self.plot_deselect_all)
         self.btn_create_label.clicked.connect(lambda: self.create_label(None))
         self.btn_delete_label.clicked.connect(self.delete_label)
         self.lv_data_columns.doubleClicked.connect(self.update_plot)
@@ -218,14 +218,33 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                 self.pg_main_plot.sigRangeChanged.disconnect()
                 self.timeline_plot_range.sigRegionChanged.disconnect()
 
-    def reset_data(self):
-        self.init_plots()
-        for index in range(self.lv_data_columns.model().rowCount()):
-            self.lv_data_columns.model().setData(
-                self.lv_data_columns.model().index(index, 0),
-                settings.LV_DATA_COLUMNS_COLOR_INACTIVE,
-                Qt.ItemDataRole.BackgroundRole,
+    def plot_deselect_all(self):
+        for i in range(self.lv_data_columns.model().rowCount()):
+            index = self.lv_data_columns.model().createIndex(i, 0)
+            col_active = (
+                self.lv_data_columns.model().data(
+                    index, Qt.ItemDataRole.BackgroundRole
+                )
+                == settings.LV_DATA_COLUMNS_COLOR_ACTIVE
             )
+            if col_active:
+                self.lv_data_columns.model().setData(
+                    index,
+                    settings.LV_DATA_COLUMNS_COLOR_INACTIVE,
+                    Qt.ItemDataRole.BackgroundRole,
+                )
+                col = self.lv_data_columns.model().data(
+                    index, Qt.ItemDataRole.DisplayRole
+                )
+                self.pg_main_plot.removeItem(self.main_plot_items[col])
+                del self.main_plot_items[col]
+                self.pg_timeline.removeItem(self.timeline_plot_items[col])
+                del self.timeline_plot_items[col]
+                if len(self.timeline_plot_items.keys()) == 0:
+                    # remove range view
+                    self.pg_timeline.removeItem(self.timeline_plot_range)
+                    self.pg_main_plot.sigRangeChanged.disconnect()
+                    self.timeline_plot_range.sigRegionChanged.disconnect()
 
     def create_label(self, label=None):
         lbl_name = f"Label {self.label_counter}" if label is None else label

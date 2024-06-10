@@ -30,9 +30,9 @@
          <item>
           <layout class="QVBoxLayout" name="verticalLayout">
            <item>
-            <widget class="QPushButton" name="btn_reset_data">
+            <widget class="QPushButton" name="btn_deselect_all">
              <property name="text">
-              <string>Reset Data</string>
+              <string>Deselect all</string>
              </property>
             </widget>
            </item>

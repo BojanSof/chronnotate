@@ -32,9 +32,9 @@ class Ui_main_window(object):
         self.verticalLayout_5.setObjectName("verticalLayout_5")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.btn_reset_data = QtWidgets.QPushButton(parent=self.gb_data)
-        self.btn_reset_data.setObjectName("btn_reset_data")
-        self.verticalLayout.addWidget(self.btn_reset_data)
+        self.btn_deselect_all = QtWidgets.QPushButton(parent=self.gb_data)
+        self.btn_deselect_all.setObjectName("btn_deselect_all")
+        self.verticalLayout.addWidget(self.btn_deselect_all)
         self.lv_data_columns = QtWidgets.QListView(parent=self.gb_data)
         self.lv_data_columns.setObjectName("lv_data_columns")
         self.verticalLayout.addWidget(self.lv_data_columns)
@@ -142,7 +142,9 @@ class Ui_main_window(object):
         _translate = QtCore.QCoreApplication.translate
         main_window.setWindowTitle(_translate("main_window", "chronnotate"))
         self.gb_data.setTitle(_translate("main_window", "Data"))
-        self.btn_reset_data.setText(_translate("main_window", "Reset Data"))
+        self.btn_deselect_all.setText(
+            _translate("main_window", "Deselect all")
+        )
         self.gb_plots.setTitle(_translate("main_window", "Plots"))
         self.gb_annotations.setTitle(_translate("main_window", "Annotations"))
         self.btn_create_label.setText(_translate("main_window", "+ Add label"))
@@ -164,6 +166,5 @@ class Ui_main_window(object):
 
 
 from pyqtgraph import PlotWidget
-
 
 from .elements import AnnotationPlotWidget
