@@ -159,6 +159,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                     rgn.update_label_pos
                 )
                 rgn.select(True)
+                rgn.update_visible(False)
                 self.annotation_regions.append(rgn)
 
     def update_plot(self, index):
@@ -202,6 +203,8 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                     self.update_range_from_plot
                 )
                 self.update_plot_from_range()
+                for rgn in self.annotation_regions:
+                    rgn.update_visible(True)
         else:
             self.lv_data_columns.model().setData(
                 index,
@@ -217,6 +220,8 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                 self.pg_timeline.removeItem(self.timeline_plot_range)
                 self.pg_main_plot.sigRangeChanged.disconnect()
                 self.timeline_plot_range.sigRegionChanged.disconnect()
+                for rgn in self.annotation_regions:
+                    rgn.update_visible(False)
 
     def plot_deselect_all(self):
         for i in range(self.lv_data_columns.model().rowCount()):
@@ -245,6 +250,8 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                     self.pg_timeline.removeItem(self.timeline_plot_range)
                     self.pg_main_plot.sigRangeChanged.disconnect()
                     self.timeline_plot_range.sigRegionChanged.disconnect()
+        for rgn in self.annotation_regions:
+            rgn.update_visible(False)
 
     def create_label(self, label=None):
         lbl_name = f"Label {self.label_counter}" if label is None else label
