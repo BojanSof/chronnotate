@@ -299,8 +299,13 @@ class AnnotationRegion(pg.LinearRegionItem):
         self.sigRegionChanged.connect(self.update_label_pos)
 
         self.update_color()
+        self.update_label_pos()
         self.plot_widget.addItem(self, ignoreBounds=True)
         self.plot_widget.addItem(self.label_item, ignoreBounds=True)
+
+    def setRegion(self, region):
+        pg.LinearRegionItem.setRegion(self, region)
+        self.update_label_pos()
 
     def region_changed(self):
         self.regionChangeFinished.emit(self)
@@ -483,7 +488,6 @@ class ViewBox(pg.ViewBox):
                     x_to = self.mapSceneToView(event.scenePos()).x()
                     with SignalBlocker(self._drag_region):
                         self._drag_region.setRegion((self._drag_start, x_to))
-                    self._drag_region.update_label_pos()
         else:
             super().mouseDragEvent(event)
 

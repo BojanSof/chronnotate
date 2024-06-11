@@ -8,15 +8,17 @@ from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QApplication,
+    QDialog,
     QFileDialog,
     QMainWindow,
     QMessageBox,
 )
 
-from . import gui_resources  # noqa
-from . import settings
+from . import gui_resources, settings  # noqa
 from .chronnotate_main_window import Ui_main_window as ChronnotateMainWindow
-from .elements import ColorItemElement, ColorItemModel
+from .data_utils import find_subsegments
+from .elements import AnnotationRegion, ColorItemElement, ColorItemModel
+from .file_dialogs import OpenDialog
 
 
 class Chronnotate(QMainWindow, ChronnotateMainWindow):
@@ -30,8 +32,8 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         self.data = None
 
     def init_elements(self):
-        self.btn_reset_data.clicked.connect(self.reset_data)
-        self.btn_create_label.clicked.connect(self.create_label)
+        self.btn_deselect_all.clicked.connect(self.plot_deselect_all)
+        self.btn_create_label.clicked.connect(lambda: self.create_label(None))
         self.btn_delete_label.clicked.connect(self.delete_label)
         self.lv_data_columns.doubleClicked.connect(self.update_plot)
         self.lv_data_columns.setEditTriggers(
@@ -86,7 +88,11 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             "All files (*);;CSV (*csv);;Text files (*txt)",
         )
         if path != "":
-            self.load_file(path)
+            settings_dialog = OpenDialog()
+            if settings_dialog.exec() == QDialog.DialogCode.Accepted:
+                skip_lines = settings_dialog.get_skip_lines()
+                col_label = settings_dialog.get_label_column_name()
+                self.load_file(path, skip_lines, col_label)
 
     def save_file(self):
         path, _ = QFileDialog.getSaveFileName(
@@ -99,9 +105,13 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             labeled_data = self.create_labeled_data()
             labeled_data.to_csv(path, index=False)
 
-    def load_file(self, path):
+    def load_file(self, path, skip_lines, col_label):
         try:
-            data = pd.read_csv(path)
+            data = pd.read_csv(path, skiprows=skip_lines)
+            if len(col_label) > 0:
+                self.label_column = col_label
+            else:
+                self.label_column = settings.DEFAULT_LABEL_COLUMN
             self.fill_elements_from_data(data)
         except Exception:
             QMessageBox.critical(
@@ -119,7 +129,7 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
             label = region.label
             labels[start:end] = label
         labeled_data = self.data.copy()
-        labeled_data[settings.LABEL_COLUMN] = labels
+        labeled_data[self.label_column] = labels
         return labeled_data
 
     def fill_elements_from_data(self, data: pd.DataFrame):
@@ -127,10 +137,30 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
         items = [
             ColorItemElement(col)
             for col in self.data.columns
-            if is_numeric_dtype(self.data[col])
+            if is_numeric_dtype(self.data[col]) and col != self.label_column
         ]
         model = ColorItemModel(items)
         self.lv_data_columns.setModel(model)
+        if self.label_column in self.data.columns:
+            segments = find_subsegments(self.data, self.label_column)
+            labels = self.data[self.label_column].dropna().unique()
+            label_colors = {}
+            for label in labels:
+                item = self.create_label(label)
+                label_colors[label] = item.color
+            for segment in segments:
+                rgn = AnnotationRegion(
+                    self.pg_main_plot,
+                    segment["label"],
+                    label_colors[segment["label"]],
+                    (segment["start"], segment["end"]),
+                )
+                self.pg_main_plot.plotItem.vb.sigYRangeChanged.connect(
+                    rgn.update_label_pos
+                )
+                rgn.select(True)
+                rgn.update_visible(False)
+                self.annotation_regions.append(rgn)
 
     def update_plot(self, index):
         col = self.lv_data_columns.model().data(
@@ -173,6 +203,8 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                     self.update_range_from_plot
                 )
                 self.update_plot_from_range()
+                for rgn in self.annotation_regions:
+                    rgn.update_visible(True)
         else:
             self.lv_data_columns.model().setData(
                 index,
@@ -188,24 +220,49 @@ class Chronnotate(QMainWindow, ChronnotateMainWindow):
                 self.pg_timeline.removeItem(self.timeline_plot_range)
                 self.pg_main_plot.sigRangeChanged.disconnect()
                 self.timeline_plot_range.sigRegionChanged.disconnect()
+                for rgn in self.annotation_regions:
+                    rgn.update_visible(False)
 
-    def reset_data(self):
-        self.init_plots()
-        for index in range(self.lv_data_columns.model().rowCount()):
-            self.lv_data_columns.model().setData(
-                self.lv_data_columns.model().index(index, 0),
-                settings.LV_DATA_COLUMNS_COLOR_INACTIVE,
-                Qt.ItemDataRole.BackgroundRole,
+    def plot_deselect_all(self):
+        for i in range(self.lv_data_columns.model().rowCount()):
+            index = self.lv_data_columns.model().createIndex(i, 0)
+            col_active = (
+                self.lv_data_columns.model().data(
+                    index, Qt.ItemDataRole.BackgroundRole
+                )
+                == settings.LV_DATA_COLUMNS_COLOR_ACTIVE
             )
+            if col_active:
+                self.lv_data_columns.model().setData(
+                    index,
+                    settings.LV_DATA_COLUMNS_COLOR_INACTIVE,
+                    Qt.ItemDataRole.BackgroundRole,
+                )
+                col = self.lv_data_columns.model().data(
+                    index, Qt.ItemDataRole.DisplayRole
+                )
+                self.pg_main_plot.removeItem(self.main_plot_items[col])
+                del self.main_plot_items[col]
+                self.pg_timeline.removeItem(self.timeline_plot_items[col])
+                del self.timeline_plot_items[col]
+                if len(self.timeline_plot_items.keys()) == 0:
+                    # remove range view
+                    self.pg_timeline.removeItem(self.timeline_plot_range)
+                    self.pg_main_plot.sigRangeChanged.disconnect()
+                    self.timeline_plot_range.sigRegionChanged.disconnect()
+        for rgn in self.annotation_regions:
+            rgn.update_visible(False)
 
-    def create_label(self):
-        lbl_name = f"Label {self.label_counter}"
+    def create_label(self, label=None):
+        lbl_name = f"Label {self.label_counter}" if label is None else label
         self.label_counter += 1
         item = ColorItemElement(lbl_name)
         model = self.lv_labels.model()
         model.insertItem(item)
         index = model.createIndex(model.rowCount() - 1, 0)
-        self.lv_labels.edit(index)
+        if label is None:
+            self.lv_labels.edit(index)
+        return item
 
     def delete_label(self):
         model = self.lv_labels.model()
@@ -269,7 +326,3 @@ def main():
     chronnotate = Chronnotate()
     chronnotate.show()
     sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()

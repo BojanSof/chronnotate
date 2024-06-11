@@ -46,7 +46,7 @@ formatting = [
     "black==24.1.1",
     "isort==5.13.2"
 ]
-"bundling" = [
+bundling = [
     "pyinstaller==6.7.0"
 ]
 dev = ["chronnotate[gui, linting, formatting, bundling]"]
