@@ -278,7 +278,7 @@ class AnnotationRegion(pg.LinearRegionItem):
             orientation="vertical",
             movable=True,
             swapMode="sort",
-            bounds=(0, 1000000),
+            bounds=(0, 1e9),
         )
         self.setZValue(0)
 
